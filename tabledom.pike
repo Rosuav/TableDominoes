@@ -246,13 +246,16 @@ void make_move(string name,array(int) hand)
 	if (nomoves) return;
 	array moves;
 	write("%O seconds to list ",gauge {moves=list_valid_moves(hand);});
-	write("%d valid moves.\n",sizeof(moves));
-	[int tile,int r,int c,int type]=random(moves);
-	write("%s: Placing %02X at (%d,%d) %sly.\n",name,tile,r,c,(['H':"horizontal",'V':"vertical"])[type]);
-	if (type=='V') place_vert(r,c,tile);
-	else place_horiz(r,c,tile);
-	int i=search(hand,tile); if (i==-1) i=search(hand,flip(tile));
-	hand=hand[..i-1]+hand[i+1..];
+	write("%d valid moves with %d pieces.\n",sizeof(moves),sizeof(hand));
+	if (sizeof(moves))
+	{
+		[int tile,int r,int c,int type]=random(moves);
+		write("%s: Placing %02X at (%d,%d) %sly.\n",name,tile,r,c,(['H':"horizontal",'V':"vertical"])[type]);
+		if (type=='V') place_vert(r,c,tile);
+		else place_horiz(r,c,tile);
+		int i=search(hand,tile); if (i==-1) i=search(hand,flip(tile));
+		hand=hand[..i-1]+hand[i+1..];
+	}
 	if (sizeof(hand)) call_out(make_move,4,name,hand);
 	/*for (int r=0;r<sizeof(board);r+=2) for (int c=0;c<sizeof(board[0]);++c)
 	{
