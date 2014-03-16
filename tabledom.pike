@@ -40,6 +40,7 @@ represented as 0x24. The offset (4 bits) is configurable, in case you want to
 run a larger set of dominoes.
 */
 GTK2.Window mainwindow;
+GTK2.Table table;
 
 enum {EMPTY=0, OTHER_ABOVE=0x1000, OTHER_BELOW=0x2000, OTHER_LEFT=0x3000, OTHER_RIGHT=0x4000};
 
@@ -72,6 +73,13 @@ int main()
 	makeboneyard();
 	GTK2.setup_gtk();
 	mainwindow=GTK2.Window(GTK2.WINDOW_TOPLEVEL);
-	mainwindow->add(GTK2.Label("This is a stub! There's no code yet."))->show_all()->signal_connect("destroy",lambda() {exit(0);});
+	table=GTK2.Table(sizeof(board),sizeof(board[0]),0);
+	mainwindow->set_title("Table Dominoes")->add(GTK2.Vbox(0,10)
+		->add(GTK2.Label("Hello, world!"))
+		->add(table)
+		->add(GTK2.HbuttonBox()
+			->add(GTK2.Button("Make a move"))
+		)
+	)->show_all()->signal_connect("destroy",lambda() {exit(0);});
 	return -1;
 }
