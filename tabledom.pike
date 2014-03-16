@@ -312,7 +312,7 @@ int main()
 		hand+=({boneyard[t]});
 		boneyard=boneyard[..t-1]+boneyard[t+1..];
 	}
-	signal(2,lambda() {nomoves=1;});
+	signal(2,lambda() {nomoves=1; signal(2,exit);});
 	call_out(make_move,2,"Player 1",hand);
 	call_out(make_move,4,"Player 2",boneyard);
 	return -1;
