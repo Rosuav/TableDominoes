@@ -65,7 +65,7 @@ void makeboneyard()
 			for (int y=0;y<=x;++y)
 				boneyard[i++]=x<<tile_shift|y;
 	if (i!=offset) exit(1,"ASSERT FAIL: Got %d tiles, expected %d!\n",i,offset);
-	write("%{%02X %}\n",boneyard);
+	//write("%{%02X %}\n",boneyard);
 }
 
 GTK2.Widget pip(int n)
@@ -245,11 +245,11 @@ int main()
 	mainwindow=GTK2.Window(GTK2.WINDOW_TOPLEVEL);
 	table=GTK2.Table(sizeof(board),sizeof(board[0]),0);
 	mainwindow->set_title("Table Dominoes")->add(GTK2.Vbox(0,10)
-		->add(GTK2.Label("Hello, world!"))
+		//->add(GTK2.Label("Hello, world!"))
 		->add(table)
-		->add(GTK2.HbuttonBox()
+		/*->add(GTK2.HbuttonBox()
 			->add(GTK2.Button("Make a move"))
-		)
+		)*/
 	)->show_all()->signal_connect("destroy",lambda() {exit(0);});
 	//Take two random tiles from the boneyard, avoiding any doubles,
 	//and place them at (offset, offset{,+1}) and (offset+1, offset{,+1}).
