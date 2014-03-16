@@ -53,7 +53,7 @@ constant max_pip=4,domino_sets=2; //Play with two 4 4 domino sets
 constant offset=(max_pip+1)*(max_pip+2)/2*domino_sets;
 array(array(int)) board=allocate(offset*2,allocate(offset*2));
 
-constant tile_shift=4;
+constant tile_shift=4,tile_mask=(1<<tile_shift)-1;
 array(int) boneyard;
 
 void makeboneyard()
@@ -66,6 +66,24 @@ void makeboneyard()
 				boneyard[i++]=x<<tile_shift|y;
 	if (i!=offset) exit(1,"ASSERT FAIL: Got %d tiles, expected %d!\n",i,offset);
 	write("%{%02X %}\n",boneyard);
+}
+
+GTK2.Widget pip(int n)
+{
+	return GTK2.Label((string)n)->set_size_request(30,30);
+}
+
+void place_horiz(int row,int col,int tile)
+{
+	board[row][col]=(tile>>tile_shift) | OTHER_RIGHT;
+	board[row][col+1]=(tile&tile_mask) | OTHER_LEFT;
+	table->attach(
+		GTK2.Frame()->add(GTK2.Hbox(0,0)
+			->add(pip(tile>>tile_shift))
+			->add(GTK2.Vseparator())
+			->add(pip(tile&tile_mask))
+		)->set_shadow_type(GTK2.SHADOW_ETCHED_OUT)->show_all()
+	,col,col+2,row,row+1,GTK2.Fill|GTK2.Expand,GTK2.Fill|GTK2.Expand,2,2);
 }
 
 int main()
@@ -81,5 +99,24 @@ int main()
 			->add(GTK2.Button("Make a move"))
 		)
 	)->show_all()->signal_connect("destroy",lambda() {exit(0);});
+	//Take two random tiles from the boneyard, avoiding any doubles,
+	//and place them at (offset, offset{,+1}) and (offset+1, offset{,+1}).
+	while (1)
+	{
+		int t=random(sizeof(boneyard));
+		if (!(boneyard[t]%(1<<tile_shift|1))) continue; //Skip doubles
+		int tile=boneyard[t];
+		if (random(2)) tile=(tile&tile_mask)<<tile_shift | tile>>tile_shift; //Flip the tile
+		boneyard=boneyard[..t-1]+boneyard[t+1..]; //Remove it
+		if (board[offset][offset])
+		{
+			//Second tile.
+			place_horiz(offset+1,offset,tile);
+			break; //Done!
+		}
+		//First tile.
+		place_horiz(offset,offset,tile);
+		//And continue to the second tile.
+	}
 	return -1;
 }
