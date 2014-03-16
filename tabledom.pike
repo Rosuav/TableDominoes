@@ -34,13 +34,42 @@ leave the sequence unclosed. ("3 4 1 0 2" has no numbers left, so the next
 domino must close the sequence with a 3.)
 
 Scoring can wait for version two.
+
+Tiles in hands, or in the boneyard, are represented by integers, eg the 2 4 is
+represented as 0x24. The offset (4 bits) is configurable, in case you want to
+run a larger set of dominoes.
 */
 GTK2.Window mainwindow;
 
 enum {EMPTY=0, OTHER_ABOVE=0x1000, OTHER_BELOW=0x2000, OTHER_LEFT=0x3000, OTHER_RIGHT=0x4000};
 
+constant max_pip=4,domino_sets=2; //Play with two 4 4 domino sets
+//In a 4 4 set of dominoes, there are (4+1)*(4+2)/2 dominoes (15).
+//We have multiple sets, and each tile has two pips. However, it's
+//not actually possible, per the rules, to stting them out quite
+//like that, so the final multiplication by 2 isn't done. But for
+//a generic domino game engine, double this value.
+constant offset=(max_pip+1)*(max_pip+2)/2*domino_sets;
+array(array(int)) board=allocate(offset*2,allocate(offset*2));
+
+constant tile_shift=4;
+array(int) boneyard;
+
+void makeboneyard()
+{
+	boneyard=allocate(offset);
+	int i=0;
+	for (int s=0;s<domino_sets;++s)
+		for (int x=0;x<=max_pip;++x)
+			for (int y=0;y<=x;++y)
+				boneyard[i++]=x<<tile_shift|y;
+	if (i!=offset) exit(1,"ASSERT FAIL: Got %d tiles, expected %d!\n",i,offset);
+	write("%{%02X %}\n",boneyard);
+}
+
 int main()
 {
+	makeboneyard();
 	GTK2.setup_gtk();
 	mainwindow=GTK2.Window(GTK2.WINDOW_TOPLEVEL);
 	mainwindow->add(GTK2.Label("This is a stub! There's no code yet."))->show_all()->signal_connect("destroy",lambda() {exit(0);});
