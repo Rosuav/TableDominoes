@@ -42,7 +42,7 @@ run a larger set of dominoes.
 GTK2.Window mainwindow;
 GTK2.Table table;
 
-enum {EMPTY=0, OTHER_ABOVE=0x1000, OTHER_BELOW=0x2000, OTHER_LEFT=0x3000, OTHER_RIGHT=0x4000};
+enum {EMPTY=0, OTHER_ABOVE=0x1000, OTHER_BELOW=0x2000, OTHER_LEFT=0x3000, OTHER_RIGHT=0x4000, OTHER_MASK=0x7000};
 
 constant max_pip=4,domino_sets=2; //Play with two 4 4 domino sets
 //In a 4 4 set of dominoes, there are (4+1)*(4+2)/2 dominoes (15).
@@ -113,7 +113,7 @@ int flip(int tile)
 }
 
 //Find valid horizontal moves involving anything from the current hand
-array low_list_valid_moves(array(int) hand,array(array(int)) board)
+array low_list_valid_moves(array(int) hand,array(array(int)) board,int otherflag)
 {
 	array moves=({});
 	foreach (board;int r;array(int) row) for (int c=0;c<sizeof(row)-2;++c)
@@ -129,6 +129,16 @@ array low_list_valid_moves(array(int) hand,array(array(int)) board)
 		//Once again, lots of duplication. Please refactor if possble.
 		{ //untab me
 			//There's space for a horizontal.
+			//See if there are already three parallel tiles.
+			//Note that if there are two on one side of us and one on the other,
+			//all parallel to the one we're about to place, that's a violation,
+			//same as if there were three already there. The half-and-half
+			//situation is pretty unlikely, but coping with that is why the count
+			//is simply maintained.
+			int parallel=0;
+			for (int rr=r-1;rr>=0 && (board[rr][c]&OTHER_MASK)==otherflag;--rr) ++parallel;
+			for (int rr=r+1;rr<sizeof(board) && (board[rr][c]&OTHER_MASK)==otherflag;++rr) ++parallel;
+			if (parallel>2) continue; //No placing anything there.
 			//Anything adjacent to us? If not, don't do any of the checks.
 			int above=r<sizeof(board)-1 && (board[r+1][c] || board[r+1][c+1]);
 			int below=r>0 && (board[r-1][c] || board[r-1][c+1]);
@@ -217,9 +227,9 @@ array low_list_valid_moves(array(int) hand,array(array(int)) board)
 //Find valid moves involving anything from the current hand
 array list_valid_moves(array(int) hand)
 {
-	array ret=low_list_valid_moves(hand,board); //Easy part.
+	array ret=low_list_valid_moves(hand,board,OTHER_RIGHT); //Easy part.
 	//Now flip the board and get vertical moves.
-	array vert=low_list_valid_moves(hand,Array.transpose(board));
+	array vert=low_list_valid_moves(hand,Array.transpose(board),OTHER_BELOW);
 	//And flip the moves back.
 	foreach (vert,array move) ret+=({({move[0],move[2],move[1],'V'})});
 	return ret;
