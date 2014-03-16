@@ -1,6 +1,9 @@
 /*
 Table dominoes
 
+Original game by Sid Sackson, under the name "Domino Bead Game". Further
+modifications by Marjo and Chris Angelico.
+
 The two hardest things to create are the internal representation and the GUI
 display, so let's start there.
 
