@@ -39,6 +39,13 @@ Tiles in hands, or in the boneyard, are represented by integers, eg the 2 4 is
 represented as 0x24. The offset (4 bits) is configurable, in case you want to
 run a larger set of dominoes.
 */
+
+/*
+There's some sort of weird bug that I'm having trouble tracking down. The
+immediate symptom is that the display goes wonky - some dominoes seem to be
+drawn improperly aligned. I don't know whether it's a display-only issue or
+an error of representation.
+*/
 GTK2.Window mainwindow;
 GTK2.Table table;
 
