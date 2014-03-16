@@ -226,6 +226,18 @@ array list_valid_moves(array(int) hand)
 	return ret;
 }
 
+void make_move(string name,array(int) hand)
+{
+	array moves;
+	write("%O seconds to list ",gauge {moves=list_valid_moves(hand);});
+	write("%d valid moves.\n",sizeof(moves));
+	[int tile,int r,int c,int type]=random(moves);
+	write("%s: Placing %02X at (%d,%d) %sly.\n",name,tile,r,c,(['H':"horizontal",'V':"vertical"])[type]);
+	if (type=='V') place_vert(r,c,tile);
+	else place_horiz(r,c,tile);
+	call_out(make_move,10,name,hand);
+}
+
 int main()
 {
 	makeboneyard();
@@ -265,9 +277,7 @@ int main()
 		hand+=({boneyard[t]});
 		boneyard=boneyard[..t-1]+boneyard[t+1..];
 	}
-	array moves;
-	write("Time: %O\n",gauge {moves=list_valid_moves(hand);});
-	foreach (moves,[int tile,int r,int c,int type]) write("Can place the %02x at (%d,%d) %sly\n",tile,r,c,(['H':"horizontal",'V':"vertical"])[type]);
-	write("%d valid moves.\n",sizeof(moves));
+	call_out(make_move,5,"Player 1",hand);
+	call_out(make_move,10,"Player 2",boneyard);
 	return -1;
 }
