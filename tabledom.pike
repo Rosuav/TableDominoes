@@ -235,7 +235,9 @@ void make_move(string name,array(int) hand)
 	write("%s: Placing %02X at (%d,%d) %sly.\n",name,tile,r,c,(['H':"horizontal",'V':"vertical"])[type]);
 	if (type=='V') place_vert(r,c,tile);
 	else place_horiz(r,c,tile);
-	call_out(make_move,10,name,hand);
+	int i=search(hand,tile); if (i==-1) i=search(hand,flip(tile));
+	hand=hand[..i-1]+hand[i+1..];
+	if (sizeof(hand)) call_out(make_move,4,name,hand);
 }
 
 int main()
@@ -277,7 +279,7 @@ int main()
 		hand+=({boneyard[t]});
 		boneyard=boneyard[..t-1]+boneyard[t+1..];
 	}
-	call_out(make_move,5,"Player 1",hand);
-	call_out(make_move,10,"Player 2",boneyard);
+	call_out(make_move,2,"Player 1",hand);
+	call_out(make_move,4,"Player 2",boneyard);
 	return -1;
 }
