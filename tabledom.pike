@@ -75,7 +75,7 @@ void makeboneyard()
 	//write("%{%02X %}\n",boneyard);
 }
 
-GTK2.Widget pip(int n)
+GTK2.Widget pip(int|string n)
 {
 	return GTK2.Label((string)n)->set_size_request(30,30);
 }
@@ -271,10 +271,10 @@ int main()
 	GTK2.setup_gtk();
 	mainwindow=GTK2.Window(GTK2.WINDOW_TOPLEVEL);
 	table=GTK2.Table(sizeof(board),sizeof(board[0]),0);
-	/*for (int i=0;i<sizeof(board);++i) table
-		->attach_defaults(pip(i),i,i+1,0,1)
-		->attach_defaults(pip(i),0,1,i,i+1)
-	;*/
+	for (int i=20;i<41;++i) table
+		->attach_defaults(pip(""),i,i+1,0,1)
+		->attach_defaults(pip(""),0,1,i,i+1)
+	;
 	mainwindow->set_title("Table Dominoes")->add(GTK2.Vbox(0,10)
 		//->add(GTK2.Label("Hello, world!"))
 		->add(table)
