@@ -233,8 +233,10 @@ array list_valid_moves(array(int) hand)
 	return ret;
 }
 
+int nomoves;
 void make_move(string name,array(int) hand)
 {
+	if (nomoves) return;
 	array moves;
 	write("%O seconds to list ",gauge {moves=list_valid_moves(hand);});
 	write("%d valid moves.\n",sizeof(moves));
@@ -245,6 +247,12 @@ void make_move(string name,array(int) hand)
 	int i=search(hand,tile); if (i==-1) i=search(hand,flip(tile));
 	hand=hand[..i-1]+hand[i+1..];
 	if (sizeof(hand)) call_out(make_move,4,name,hand);
+	/*for (int r=0;r<sizeof(board);r+=2) for (int c=0;c<sizeof(board[0]);++c)
+	{
+		if (!c) write("\n");
+		write("%c",":.' "[!board[r][c] + 2*!board[r+1][c]]);
+	}
+	write("\n");*/
 }
 
 int main()
@@ -253,6 +261,10 @@ int main()
 	GTK2.setup_gtk();
 	mainwindow=GTK2.Window(GTK2.WINDOW_TOPLEVEL);
 	table=GTK2.Table(sizeof(board),sizeof(board[0]),0);
+	/*for (int i=0;i<sizeof(board);++i) table
+		->attach_defaults(pip(i),i,i+1,0,1)
+		->attach_defaults(pip(i),0,1,i,i+1)
+	;*/
 	mainwindow->set_title("Table Dominoes")->add(GTK2.Vbox(0,10)
 		//->add(GTK2.Label("Hello, world!"))
 		->add(table)
@@ -286,6 +298,7 @@ int main()
 		hand+=({boneyard[t]});
 		boneyard=boneyard[..t-1]+boneyard[t+1..];
 	}
+	signal(2,lambda() {nomoves=1;});
 	call_out(make_move,2,"Player 1",hand);
 	call_out(make_move,4,"Player 2",boneyard);
 	return -1;
