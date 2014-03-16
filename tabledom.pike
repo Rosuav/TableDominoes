@@ -127,98 +127,96 @@ array low_list_valid_moves(array(int) hand,array(array(int)) board,int otherflag
 		//be relatively small (14 in a two-player game, less with more
 		//players - and shrinking), I'm iterating through the hand.
 		//Once again, lots of duplication. Please refactor if possble.
-		{ //untab me
-			//There's space for a horizontal.
-			//See if there are already three parallel tiles.
-			//Note that if there are two on one side of us and one on the other,
-			//all parallel to the one we're about to place, that's a violation,
-			//same as if there were three already there. The half-and-half
-			//situation is pretty unlikely, but coping with that is why the count
-			//is simply maintained.
-			int parallel=0;
-			for (int rr=r-1;rr>=0 && (board[rr][c]&OTHER_MASK)==otherflag;--rr) ++parallel;
-			for (int rr=r+1;rr<sizeof(board) && (board[rr][c]&OTHER_MASK)==otherflag;++rr) ++parallel;
-			if (parallel>2) continue; //No placing anything there.
-			//Anything adjacent to us? If not, don't do any of the checks.
-			int above=r<sizeof(board)-1 && (board[r+1][c] || board[r+1][c+1]);
-			int below=r>0 && (board[r-1][c] || board[r-1][c+1]);
-			int left=c>0 && board[r][c-1]; //Cannons to the left of us?
-			int right=c<sizeof(row)-2 && board[r][c+2]; //Cannons to the right of us?
-			if (above || below || left || right)
+
+		//See if there are already three parallel tiles.
+		//Note that if there are two on one side of us and one on the other,
+		//all parallel to the one we're about to place, that's a violation,
+		//same as if there were three already there. The half-and-half
+		//situation is pretty unlikely, but coping with that is why the count
+		//is simply maintained.
+		int parallel=0;
+		for (int rr=r-1;rr>=0 && (board[rr][c]&OTHER_MASK)==otherflag;--rr) ++parallel;
+		for (int rr=r+1;rr<sizeof(board) && (board[rr][c]&OTHER_MASK)==otherflag;++rr) ++parallel;
+		if (parallel>2) continue; //No placing anything there.
+		//Anything adjacent to us? If not, don't do any of the checks.
+		int above=r<sizeof(board)-1 && (board[r+1][c] || board[r+1][c+1]);
+		int below=r>0 && (board[r-1][c] || board[r-1][c+1]);
+		int left=c>0 && board[r][c-1]; //Cannons to the left of us?
+		int right=c<sizeof(row)-2 && board[r][c+2]; //Cannons to the right of us?
+		if (above || below || left || right)
+		{
+			//There's something. Let's try this.
+			multiset(int) tried=(<>);
+			//Somewhat hackish: Try each tile potentially twice, flipping in
+			//between. After flipping twice, it's certain to be in tried[],
+			//so we won't infinitely loop. Plus, doubles (which are the same
+			//once flipped) don't need to be tried twice, and duplicate tiles
+			//can also be skipped. It covers all cases.
+			foreach (hand;int i;int tile) while (1)
 			{
-				//There's something. Let's try this.
-				multiset(int) tried=(<>);
-				//Somewhat hackish: Try each tile potentially twice, flipping in
-				//between. After flipping twice, it's certain to be in tried[],
-				//so we won't infinitely loop. Plus, doubles (which are the same
-				//once flipped) don't need to be tried twice, and duplicate tiles
-				//can also be skipped. It covers all cases.
-				foreach (hand;int i;int tile) while (1)
+				if (tried[tile]) break;
+				int legal=1;
+				board[r][c]=tile>>tile_shift; board[r][c+1]=tile&tile_mask;
+				array(int) lines=({ });
+				if (above || below)
 				{
-					if (tried[tile]) break;
-					int legal=1;
-					board[r][c]=tile>>tile_shift; board[r][c+1]=tile&tile_mask;
-					array(int) lines=({ });
-					if (above || below)
+					for (int cc=c;cc<=c+1;++cc)
 					{
-						for (int cc=c;cc<=c+1;++cc)
-						{
-							int r1=r-1; while (r1>=0 && board[r1][cc]) --r1;
-							int r2=r+1; while (r1<sizeof(board) && board[r2][cc]) ++r2;
-							++r1; --r2;
-							if (r1==r && r2==r) continue;
-							//At this point, the vertical strip from (r1,cc) to (r2,cc)
-							//is a consecutive chain of tiles. Usually either r1 or r2
-							//will be equal to r (both is possible but only because we
-							//have two iterations on cc - a domino could stick out), but
-							//it's entirely possible that they'll both be different, in
-							//which case we're actually merging two lines. This will be
-							//VERY rare in actual gameplay, but possible; and legal only
-							//if the entire new line follows a single pattern.
-							//Mask it off so we just get the tile value, not the OTHER_.
-							int ok=1;
-							array(int) pattern=({board[r1][cc]&tile_mask});
-							for (int rr=r1+1;rr<=r2;++rr)
-							{
-								int cur=board[rr][cc]&tile_mask;
-								if (cur==pattern[0]) {pattern=pattern[1..]+({cur}); ok=2;} //Looped pattern.
-								else if (ok==1 && !has_value(pattern,cur)) pattern+=({cur}); //Pattern hasn't looped yet
-								else {ok=0; break;} //Broken pattern.
-							}
-							if (!ok) {legal=0; break;} //Not a legal move - breaks a pattern.
-							lines+=({r2-r1+1});
-							if (r1<r && r2>r) lines+=({lines[-1]}); //If you linked two, count it twice! CJA rule, may not be quite official.
-						}
-					}
-					if (legal && (left || right))
-					{
-						//And hello duplication... only this time, we don't need to check twice.
-						//The cc in the loop above is just c here. Well, actually it's r here, but same diff.
-						int c1=c-1; while (c1>=0 && board[r][c1]) --c1;
-						int c2=c+2; while (c1<sizeof(row) && board[r][c2]) ++c2;
-						++c1; --c2;
-						//As above, the horizontal strip from (r,c1) to (r,c2)
-						//is a consecutive chain of tiles. One or both must differ
-						//from c or c+1; if they were both equal to those, then the
-						//check (left || right) would have been false.
+						int r1=r-1; while (r1>=0 && board[r1][cc]) --r1;
+						int r2=r+1; while (r1<sizeof(board) && board[r2][cc]) ++r2;
+						++r1; --r2;
+						if (r1==r && r2==r) continue;
+						//At this point, the vertical strip from (r1,cc) to (r2,cc)
+						//is a consecutive chain of tiles. Usually either r1 or r2
+						//will be equal to r (both is possible but only because we
+						//have two iterations on cc - a domino could stick out), but
+						//it's entirely possible that they'll both be different, in
+						//which case we're actually merging two lines. This will be
+						//VERY rare in actual gameplay, but possible; and legal only
+						//if the entire new line follows a single pattern.
+						//Mask it off so we just get the tile value, not the OTHER_.
 						int ok=1;
-						array(int) pattern=({board[r][c1]&tile_mask});
-						for (int cc=c1+1;cc<=c2;++cc)
+						array(int) pattern=({board[r1][cc]&tile_mask});
+						for (int rr=r1+1;rr<=r2;++rr)
 						{
-							int cur=board[r][cc]&tile_mask;
+							int cur=board[rr][cc]&tile_mask;
 							if (cur==pattern[0]) {pattern=pattern[1..]+({cur}); ok=2;} //Looped pattern.
 							else if (ok==1 && !has_value(pattern,cur)) pattern+=({cur}); //Pattern hasn't looped yet
 							else {ok=0; break;} //Broken pattern.
 						}
 						if (!ok) {legal=0; break;} //Not a legal move - breaks a pattern.
-						lines+=({c2-c1+1});
+						lines+=({r2-r1+1});
+						if (r1<r && r2>r) lines+=({lines[-1]}); //If you linked two, count it twice! CJA rule, may not be quite official.
 					}
-					if (legal && sizeof(lines)>1) moves+=({({tile,r,c,'H'})});
-					tried[tile]=1;
-					tile=flip(tile);
 				}
-				board[r][c]=board[r][c+1]=0;
+				if (legal && (left || right))
+				{
+					//And hello duplication... only this time, we don't need to check twice.
+					//The cc in the loop above is just c here. Well, actually it's r here, but same diff.
+					int c1=c-1; while (c1>=0 && board[r][c1]) --c1;
+					int c2=c+2; while (c1<sizeof(row) && board[r][c2]) ++c2;
+					++c1; --c2;
+					//As above, the horizontal strip from (r,c1) to (r,c2)
+					//is a consecutive chain of tiles. One or both must differ
+					//from c or c+1; if they were both equal to those, then the
+					//check (left || right) would have been false.
+					int ok=1;
+					array(int) pattern=({board[r][c1]&tile_mask});
+					for (int cc=c1+1;cc<=c2;++cc)
+					{
+						int cur=board[r][cc]&tile_mask;
+						if (cur==pattern[0]) {pattern=pattern[1..]+({cur}); ok=2;} //Looped pattern.
+						else if (ok==1 && !has_value(pattern,cur)) pattern+=({cur}); //Pattern hasn't looped yet
+						else {ok=0; break;} //Broken pattern.
+					}
+					if (!ok) {legal=0; break;} //Not a legal move - breaks a pattern.
+					lines+=({c2-c1+1});
+				}
+				if (legal && sizeof(lines)>1) moves+=({({tile,r,c,'H'})});
+				tried[tile]=1;
+				tile=flip(tile);
 			}
+			board[r][c]=board[r][c+1]=0;
 		}
 	}
 	return moves;
