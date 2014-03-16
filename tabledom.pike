@@ -306,7 +306,7 @@ int main()
 		//And continue to the second tile.
 	}
 	array hand=({ });
-	for (int i=0;i<offset/2;++i) //2 = number of players
+	for (int i=0;i<offset/2-1;++i) //2 = number of players
 	{
 		int t=random(sizeof(boneyard));
 		hand+=({boneyard[t]});
