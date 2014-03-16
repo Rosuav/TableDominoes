@@ -73,6 +73,7 @@ GTK2.Widget pip(int n)
 	return GTK2.Label((string)n)->set_size_request(30,30);
 }
 
+//TODO: Dedup these two
 void place_horiz(int row,int col,int tile)
 {
 	board[row][col]=(tile>>tile_shift) | OTHER_RIGHT;
@@ -84,6 +85,38 @@ void place_horiz(int row,int col,int tile)
 			->add(pip(tile&tile_mask))
 		)->set_shadow_type(GTK2.SHADOW_ETCHED_OUT)->show_all()
 	,col,col+2,row,row+1,GTK2.Fill|GTK2.Expand,GTK2.Fill|GTK2.Expand,2,2);
+}
+
+void place_vert(int row,int col,int tile)
+{
+	board[row][col]=(tile>>tile_shift) | OTHER_BELOW;
+	board[row+1][col]=(tile&tile_mask) | OTHER_ABOVE;
+	table->attach(
+		GTK2.Frame()->add(GTK2.Vbox(0,0)
+			->add(pip(tile>>tile_shift))
+			->add(GTK2.Hseparator())
+			->add(pip(tile&tile_mask))
+		)->set_shadow_type(GTK2.SHADOW_ETCHED_OUT)->show_all()
+	,col,col+1,row,row+2,GTK2.Fill|GTK2.Expand,GTK2.Fill|GTK2.Expand,2,2);
+}
+
+//Find valid moves involving anything from the current hand
+array list_valid_moves(array(int) hand)
+{
+	array moves=({});
+	foreach (board;int r;array(int) row) foreach (row;int c;int cell)
+	{
+		if (cell) continue; //Can't put anything down here.
+		if (!row[c+1])
+		{
+			//There's space for a horizontal.
+			
+		}
+		if (!board[r+1][c])
+		{
+			//There's space for a vertical.
+		}
+	}
 }
 
 int main()
@@ -118,5 +151,6 @@ int main()
 		place_horiz(offset,offset,tile);
 		//And continue to the second tile.
 	}
+	write("Time: %O\n",gauge {list_valid_moves(boneyard);});
 	return -1;
 }
