@@ -116,9 +116,9 @@ int flip(int tile)
 array low_list_valid_moves(array(int) hand,array(array(int)) board)
 {
 	array moves=({});
-	foreach (board;int r;array(int) row) foreach (row;int c;int cell)
+	foreach (board;int r;array(int) row) for (int c=0;c<sizeof(row)-2;++c)
 	{
-		if (cell) continue; //Can't put anything here, it's occupied.
+		if (row[c] || row[c+1]) continue; //Can't put anything here, it's occupied.
 		//This is pretty brute-force. I need to find the intersection
 		//between legal moves and the player's hand. This could be done
 		//either by figuring out what's legal and then looking through
@@ -127,8 +127,7 @@ array low_list_valid_moves(array(int) hand,array(array(int)) board)
 		//be relatively small (14 in a two-player game, less with more
 		//players - and shrinking), I'm iterating through the hand.
 		//Once again, lots of duplication. Please refactor if possble.
-		if (c<sizeof(row)-1 && !row[c+1])
-		{
+		{ //untab me
 			//There's space for a horizontal.
 			//Anything adjacent to us? If not, don't do any of the checks.
 			int above=r<sizeof(board)-1 && (board[r+1][c] || board[r+1][c+1]);
