@@ -281,6 +281,10 @@ int main()
 	)->show_all()->signal_connect("destroy",lambda() {exit(0);});
 	//Take two random tiles from the boneyard, avoiding any doubles,
 	//and place them at (offset, offset{,+1}) and (offset+1, offset{,+1}).
+	//Note that the original rules merely specify that having two
+	//identical doubles results in a redeal, but the game's more fun if
+	//there are no doubles to start with. (Redeals are cheap with a
+	//computer, but more costly with physical tiles.)
 	while (1)
 	{
 		int t=random(sizeof(boneyard));
