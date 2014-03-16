@@ -112,8 +112,8 @@ int flip(int tile)
 	return (tile&tile_mask)<<tile_shift | tile>>tile_shift;
 }
 
-//Find valid moves involving anything from the current hand
-array list_valid_moves(array(int) hand)
+//Find valid horizontal moves involving anything from the current hand
+array low_list_valid_moves(array(int) hand,array(array(int)) board)
 {
 	array moves=({});
 	foreach (board;int r;array(int) row) foreach (row;int c;int cell)
@@ -204,24 +204,26 @@ array list_valid_moves(array(int) hand)
 						if (!ok) {legal=0; break;} //Not a legal move - breaks a pattern.
 						lines+=({c2-c1+1});
 					}
-					if (legal && sizeof(lines)>1)
-					{
-						write("Can place the %02x at (%d,%d) horizontally\n",tile,r,c);
-						moves+=({({tile,r,c,"H"})});
-					}
+					if (legal && sizeof(lines)>1) moves+=({({tile,r,c,'H'})});
 					tried[tile]=1;
 					tile=flip(tile);
 				}
 				board[r][c]=board[r][c+1]=0;
 			}
 		}
-		if (r<sizeof(board)-1 && !board[r+1][c])
-		{
-			//There's space for a vertical.
-			//I guess this is gonna largely duplicate the above code. Sigh.
-		}
 	}
 	return moves;
+}
+
+//Find valid moves involving anything from the current hand
+array list_valid_moves(array(int) hand)
+{
+	array ret=low_list_valid_moves(hand,board); //Easy part.
+	//Now flip the board and get vertical moves.
+	array vert=low_list_valid_moves(hand,Array.transpose(board));
+	//And flip the moves back.
+	foreach (vert,array move) ret+=({({move[0],move[2],move[1],'V'})});
+	return ret;
 }
 
 int main()
@@ -263,6 +265,9 @@ int main()
 		hand+=({boneyard[t]});
 		boneyard=boneyard[..t-1]+boneyard[t+1..];
 	}
-	write("Time: %O\n",gauge {list_valid_moves(hand);});
+	array moves;
+	write("Time: %O\n",gauge {moves=list_valid_moves(hand);});
+	foreach (moves,[int tile,int r,int c,int type]) write("Can place the %02x at (%d,%d) %sly\n",tile,r,c,(['H':"horizontal",'V':"vertical"])[type]);
+	write("%d valid moves.\n",sizeof(moves));
 	return -1;
 }
