@@ -100,23 +100,44 @@ void place_vert(int row,int col,int tile)
 	,col,col+1,row,row+2,GTK2.Fill|GTK2.Expand,GTK2.Fill|GTK2.Expand,2,2);
 }
 
+//Figure out if a tile is a double (eg 2 2). Uses weird modulo arithmetic. :)
+int is_double(int tile)
+{
+	return !(tile%(1<<tile_shift|1));
+}
+
+//Flip a tile end for end. With doubles, flip(x)==x.
+int flip(int tile)
+{
+	return (tile&tile_mask)<<tile_shift | tile>>tile_shift;
+}
+
+//Try to make a move at the specified row/col
+array try_move(int r1,int c1,int r2,int c2,array(int) hand)
+{
+	return ({ });
+}
+
 //Find valid moves involving anything from the current hand
 array list_valid_moves(array(int) hand)
 {
 	array moves=({});
 	foreach (board;int r;array(int) row) foreach (row;int c;int cell)
 	{
-		if (cell) continue; //Can't put anything down here.
-		if (!row[c+1])
-		{
-			//There's space for a horizontal.
-			
-		}
-		if (!board[r+1][c])
-		{
-			//There's space for a vertical.
-		}
+		if (cell) continue; //Can't put anything here, it's occupied.
+		//This is pretty brute-force. I need to find the intersection
+		//between legal moves and the player's hand. This could be done
+		//either by figuring out what's legal and then looking through
+		//the hand, or by iterating through the hand and seeing if each
+		//is legal. Since, in a multiplayer game, the hand is likely to
+		//be relatively small (14 in a two-player game, less with more
+		//players), I'm iterating through the hand.
+		if (c<sizeof(row)-1 && !row[c+1]) //There's space for a horizontal.
+			moves+=try_move(r,c,r,c+1,hand);
+		if (r<sizeof(board)-1 && !board[r+1][c]) //There's space for a vertical.
+			moves+=try_move(r,c,r+1,c,hand);
 	}
+	return moves;
 }
 
 int main()
@@ -137,9 +158,9 @@ int main()
 	while (1)
 	{
 		int t=random(sizeof(boneyard));
-		if (!(boneyard[t]%(1<<tile_shift|1))) continue; //Skip doubles
+		if (is_double(boneyard[t])) continue;
 		int tile=boneyard[t];
-		if (random(2)) tile=(tile&tile_mask)<<tile_shift | tile>>tile_shift; //Flip the tile
+		if (random(2)) tile=flip(tile);
 		boneyard=boneyard[..t-1]+boneyard[t+1..]; //Remove it
 		if (board[offset][offset])
 		{
@@ -151,6 +172,13 @@ int main()
 		place_horiz(offset,offset,tile);
 		//And continue to the second tile.
 	}
-	write("Time: %O\n",gauge {list_valid_moves(boneyard);});
+	array hand=({ });
+	for (int i=0;i<offset/2;++i) //2 = number of players
+	{
+		int t=random(sizeof(boneyard));
+		hand+=({boneyard[t]});
+		boneyard=boneyard[..t-1]+boneyard[t+1..];
+	}
+	write("Time: %O\n",gauge {list_valid_moves(hand);});
 	return -1;
 }
